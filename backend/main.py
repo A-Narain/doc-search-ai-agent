@@ -2,22 +2,22 @@ from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 import os
 
-from github_service import upload_to_github
 from document_processor import extract_text
+from github_service import upload_to_github
 from chunking import chunk_text
 from vector_store import store_chunks
 from retriever import retrieve_chunks
 from gemini_service import generate_answer
+from query_rewriter import rewrite_query
 
 app = FastAPI()
 
 UPLOAD_FOLDER = "uploads"
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-
-class QuestionRequest(BaseModel):
-    question: str
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
 
 
 @app.get("/")
@@ -28,7 +28,9 @@ def home():
 
 
 @app.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    file: UploadFile = File(...)
+):
 
     filepath = os.path.join(
         UPLOAD_FOLDER,
@@ -46,18 +48,24 @@ async def upload_document(file: UploadFile = File(...)):
     )
 
     # Extract text
-    text = extract_text(filepath)
+    text = extract_text(
+        filepath
+    )
 
     # Chunk text
-    chunks = chunk_text(text)
+    chunks = chunk_text(
+        text
+    )
 
-    # Store embeddings in ChromaDB
+    # Store embeddings
     store_chunks(
         chunks,
         file.filename
     )
 
-    print(f"Stored {len(chunks)} chunks")
+    print(
+        f"Stored {len(chunks)} chunks"
+    )
 
     return {
         "message": "File uploaded successfully",
@@ -66,31 +74,54 @@ async def upload_document(file: UploadFile = File(...)):
     }
 
 
-@app.post("/chat")
-async def chat(request: QuestionRequest):
+class QuestionRequest(BaseModel):
+    question: str
 
-    retrieved_chunks = retrieve_chunks(
+
+@app.post("/chat")
+async def chat(
+    request: QuestionRequest
+):
+
+    # Query Rewriting
+    rewritten_query = rewrite_query(
         request.question
     )
 
-    answer = generate_answer(
-    request.question,
-    retrieved_chunks
-)
+    print(
+        f"\nOriginal Query: {request.question}"
+    )
 
+    print(
+        f"Rewritten Query: {rewritten_query}"
+    )
+
+    # Retrieval
+    retrieved_chunks = retrieve_chunks(
+        rewritten_query
+    )
+
+    # Gemini Answer
+    answer = generate_answer(
+        request.question,
+        retrieved_chunks
+    )
+
+    # Sources
     sources = []
 
     for chunk in retrieved_chunks:
 
         sources.append(
-       {
-            "filename": chunk["filename"],
-            "chunk_id": chunk["chunk_id"]
-        }
-    )
+            {
+                "filename": chunk["filename"],
+                "chunk_id": chunk["chunk_id"]
+            }
+        )
 
     return {
-    "question": request.question,
-    "answer": answer,
-    "sources": sources
+        "question": request.question,
+        "rewritten_query": rewritten_query,
+        "answer": answer,
+        "sources": sources
     }
