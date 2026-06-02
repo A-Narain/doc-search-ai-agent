@@ -9,6 +9,7 @@ from vector_store import store_chunks
 from retriever import retrieve_chunks
 from gemini_service import generate_answer
 from query_rewriter import rewrite_query
+from response_verifier import verify_answer
 
 app = FastAPI()
 
@@ -41,7 +42,7 @@ async def upload_document(
         content = await file.read()
         buffer.write(content)
 
-    # Upload to GitHub
+    # Upload document to GitHub
     upload_to_github(
         filepath,
         file.filename
@@ -83,7 +84,7 @@ async def chat(
     request: QuestionRequest
 ):
 
-    # Query Rewriting
+    # Query rewriting
     rewritten_query = rewrite_query(
         request.question
     )
@@ -96,18 +97,25 @@ async def chat(
         f"Rewritten Query: {rewritten_query}"
     )
 
-    # Retrieval
+    # Retrieve relevant chunks
     retrieved_chunks = retrieve_chunks(
         rewritten_query
     )
 
-    # Gemini Answer
+    # Generate answer
     answer = generate_answer(
         request.question,
         retrieved_chunks
     )
 
-    # Sources
+    # Verify answer
+    verification_result = verify_answer(
+        request.question,
+        answer,
+        retrieved_chunks
+    )
+
+    # Build source list
     sources = []
 
     for chunk in retrieved_chunks:
@@ -123,5 +131,6 @@ async def chat(
         "question": request.question,
         "rewritten_query": rewritten_query,
         "answer": answer,
+        "verification": verification_result,
         "sources": sources
     }
