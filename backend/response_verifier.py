@@ -1,56 +1,82 @@
 import os
-import google.generativeai as genai
+import time
+from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(
-    api_key=os.getenv("GOOGLE_API_KEY")
-)
-
-model = genai.GenerativeModel(
-    "gemini-2.5-flash"
-)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+MODEL  = "llama-3.1-8b-instant"
 
 
-def verify_answer(
-    question,
-    answer,
-    retrieved_chunks
-):
+def verify_answer(question, answer, retrieved_chunks):
 
-    context = "\n\n".join(
-        [
-            chunk["text"]
-            for chunk in retrieved_chunks
-        ]
-    )
+    context = "\n\n".join([chunk["text"] for chunk in retrieved_chunks])
 
-    prompt = f"""
-You are a response verifier.
+    # ── Step 1: Verify ────────────────────────────────────
+    verify_prompt = f"""You are a strict fact-checker for a document search system.
 
-Question:
-{question}
+Question: {question}
 
-Retrieved Context:
+Retrieved context (source of truth):
 {context}
 
-Generated Answer:
+Generated answer:
 {answer}
 
-Check whether the answer is fully supported by the retrieved context.
+Does the answer contain ONLY information supported by the context above?
+Reply with exactly one word: VERIFIED or NOT VERIFIED"""
 
-If supported:
-Return exactly:
-VERIFIED
+    status = "VERIFIED"
 
-If not supported:
-Return exactly:
-NOT VERIFIED
-"""
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "user", "content": verify_prompt}],
+                max_tokens=10,
+                temperature=0.0
+            )
+            raw = response.choices[0].message.content.strip().upper()
+            status = "NOT VERIFIED" if "NOT" in raw else "VERIFIED"
+            break
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(3)
 
-    response = model.generate_content(
-        prompt
-    )
+    # ── Step 2: Refine if not verified ────────────────────
+    final_answer = answer
 
-    return response.text.strip()
+    if status == "NOT VERIFIED":
+        refine_prompt = f"""You are a response refiner.
+
+The answer below contains claims not supported by the context.
+Rewrite it using ONLY information from the context.
+If the context is insufficient, say: "The documents do not contain enough information to answer this fully."
+
+Question: {question}
+
+Context (only source of truth):
+{context}
+
+Answer to refine:
+{answer}
+
+Refined answer:"""
+
+        for attempt in range(3):
+            try:
+                refine_response = client.chat.completions.create(
+                    model=MODEL,
+                    messages=[{"role": "user", "content": refine_prompt}],
+                    max_tokens=1000,
+                    temperature=0.1
+                )
+                final_answer = refine_response.choices[0].message.content.strip()
+                print("[Verifier] Answer was NOT VERIFIED — refined.")
+                break
+            except Exception as e:
+                if attempt < 2:
+                    time.sleep(3)
+
+    return status, final_answer

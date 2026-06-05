@@ -1,6 +1,6 @@
 import os
 import time
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 
 from retriever import retrieve_chunks
@@ -8,9 +8,9 @@ from query_rewriter import rewrite_query
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+MODEL  = "llama-3.1-8b-instant"
 
-MODEL                = "gemini-2.5-flash"
 MAX_ITERATIONS       = 3
 CONFIDENCE_THRESHOLD = 0.40
 
@@ -24,75 +24,70 @@ def compute_confidence(retrieved_chunks):
 
 def generate_alternative_query(original_question, current_query, confidence):
 
-    prompt = f"""
-You are helping improve a document search query that returned poor results.
+    prompt = f"""A document search query returned poor results.
 
-Original user question:
-{original_question}
+Original question: {original_question}
+Current query that failed: {current_query}
+Confidence score: {confidence:.2f} out of 1.0
 
-Current search query that gave low results:
-{current_query}
-
-Retrieval confidence score: {confidence:.2f} (scale 0.0 to 1.0)
-
-Generate ONE alternative search query using different keywords or a different angle.
-Return ONLY the new query. No explanation. No quotes.
-"""
+Generate ONE alternative search query using different keywords, synonyms, or a different angle.
+Return ONLY the new query. No explanation."""
 
     for attempt in range(3):
         try:
-            response = client.models.generate_content(
+            response = client.chat.completions.create(
                 model=MODEL,
-                contents=prompt
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=80,
+                temperature=0.3
             )
-            return response.text.strip()
+            return response.choices[0].message.content.strip()
         except Exception as e:
-            if "503" in str(e) and attempt < 2:
-                print(f"[Gemini] 503 error, retrying in 5s... (attempt {attempt+1})")
-                time.sleep(5)
+            if attempt < 2:
+                time.sleep(3)
             else:
-                raise
+                return current_query  # fallback
 
 
 def agentic_retrieve(question, filename_filter=None):
 
-    # Skip LLM query rewrite to save API calls — use question directly
-    # Only rewrite if question is very short (under 10 words)
-    if len(question.split()) < 10:
-        try:
-            query = rewrite_query(question)
-        except Exception:
-            query = question  # fallback to original if quota hit
-    else:
-        query = question
-
+    query           = rewrite_query(question)
     best_chunks     = []
     best_confidence = 0.0
     iteration_log   = []
 
-    # Reduce to 1 iteration to save quota — only retry if truly empty
-    max_iter = 1
+    for iteration in range(1, MAX_ITERATIONS + 1):
 
-    for iteration in range(1, max_iter + 1):
-
-        print(f"\n[Agent] Iteration {iteration}/{max_iter}")
+        print(f"\n[Agent] Iteration {iteration}/{MAX_ITERATIONS}")
         print(f"[Agent] Query: {query}")
 
         chunks     = retrieve_chunks(query, filename_filter=filename_filter)
         confidence = compute_confidence(chunks)
 
-        print(f"[Agent] Confidence: {confidence:.3f}")
+        print(f"[Agent] Confidence: {confidence:.3f} (threshold: {CONFIDENCE_THRESHOLD})")
 
         iteration_log.append({
             "iteration":    iteration,
             "query":        query,
             "confidence":   round(confidence, 3),
             "chunks_found": len(chunks),
-            "status":       "accepted"
+            "status":       "accepted"              if confidence >= CONFIDENCE_THRESHOLD
+                            else "retrying"          if iteration < MAX_ITERATIONS
+                            else "max_iterations_reached"
         })
 
         if confidence > best_confidence:
             best_confidence = confidence
             best_chunks     = chunks
+
+        if confidence >= CONFIDENCE_THRESHOLD:
+            print(f"[Agent] Confident enough. Stopping at iteration {iteration}.")
+            break
+
+        if iteration < MAX_ITERATIONS:
+            print(f"[Agent] Low confidence. Generating alternative query...")
+            query = generate_alternative_query(question, query, confidence)
+        else:
+            print(f"[Agent] Max iterations reached. Returning best result.")
 
     return best_chunks, best_confidence, iteration_log

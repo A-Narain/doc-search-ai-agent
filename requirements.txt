@@ -29,3 +29,5 @@ PyGithub
 
 # ── Environment variables ─────────────────────────────────
 python-dotenv
+
+groq
