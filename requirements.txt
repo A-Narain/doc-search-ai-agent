@@ -1,0 +1,31 @@
+# ── Web framework ────────────────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart
+
+# ── LLM ──────────────────────────────────────────────────
+google-genai
+
+# ── Embeddings + Vector store ─────────────────────────────
+sentence-transformers
+chromadb
+
+# ── Text splitting ────────────────────────────────────────
+langchain-text-splitters
+
+# ── Document parsers: existing ────────────────────────────
+pymupdf
+python-docx
+
+# ── Document parsers: NEW ─────────────────────────────────
+openpyxl
+python-pptx
+extract-msg
+beautifulsoup4
+lxml
+
+# ── GitHub integration ────────────────────────────────────
+PyGithub
+
+# ── Environment variables ─────────────────────────────────
+python-dotenv
