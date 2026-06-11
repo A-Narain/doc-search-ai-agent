@@ -49,7 +49,7 @@ Return ONLY the new query. No explanation."""
                 return current_query  # fallback
 
 
-def agentic_retrieve(question, filename_filter=None):
+def agentic_retrieve(question, filename_filter=None, session_id=None):  # ← session_id added
 
     query           = rewrite_query(question)
     best_chunks     = []
@@ -60,8 +60,15 @@ def agentic_retrieve(question, filename_filter=None):
 
         print(f"\n[Agent] Iteration {iteration}/{MAX_ITERATIONS}")
         print(f"[Agent] Query: {query}")
+        if session_id:
+            print(f"[Agent] Session: {session_id}")
 
-        chunks     = retrieve_chunks(query, filename_filter=filename_filter)
+        chunks = retrieve_chunks(
+            query,
+            filename_filter=filename_filter,
+            session_id=session_id          # ← passed to retriever
+        )
+
         confidence = compute_confidence(chunks)
 
         print(f"[Agent] Confidence: {confidence:.3f} (threshold: {CONFIDENCE_THRESHOLD})")
@@ -71,8 +78,8 @@ def agentic_retrieve(question, filename_filter=None):
             "query":        query,
             "confidence":   round(confidence, 3),
             "chunks_found": len(chunks),
-            "status":       "accepted"              if confidence >= CONFIDENCE_THRESHOLD
-                            else "retrying"          if iteration < MAX_ITERATIONS
+            "status":       "accepted"               if confidence >= CONFIDENCE_THRESHOLD
+                            else "retrying"           if iteration < MAX_ITERATIONS
                             else "max_iterations_reached"
         })
 

@@ -1,16 +1,26 @@
 from vector_store import (
     collection,
-    embedding_model
+    embedding_model,
+    client          # ← import client to get session collections
 )
 
 
-def retrieve_chunks(query, k=5, filename_filter=None):
+def retrieve_chunks(query, k=5, filename_filter=None, session_id=None):
 
     query_embedding = embedding_model.encode(query)
 
+    # ── Pick correct collection based on session ──────────
+    if session_id:
+        target_collection = client.get_or_create_collection(
+            name=f"documents_{session_id}"
+        )
+    else:
+        target_collection = collection  # default shared collection
+
+    # ── Optional filename filter ──────────────────────────
     where = {"filename": filename_filter} if filename_filter else None
 
-    results = collection.query(
+    results = target_collection.query(
         query_embeddings=[query_embedding.tolist()],
         n_results=k,
         where=where,
