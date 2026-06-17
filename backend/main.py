@@ -1,23 +1,26 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Header
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
 import os
 
 from document_processor import extract_text
-from github_service      import upload_to_github
-from chunking            import chunk_text
-from vector_store        import store_chunks, client as chroma_client, collection
-from gemini_service      import generate_answer
-from response_verifier   import verify_answer
-from response_formatter  import format_response
-from agent_loop          import agentic_retrieve
+from github_service import upload_to_github
+from chunking import chunk_text
+from vector_store import store_chunks, collection
+from intent_classifier import classify_intent
+from conversation_memory import (
+    add_message,
+    get_history_as_text,
+    clear_session
+)
+from agent_router import route
 
-app = FastAPI(title="Document Search AI Agent", version="2.0.0")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -26,136 +29,82 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-@app.get("/", summary="Health check")
+# ── Health check ──────────────────────────────────────────
+
+@app.get("/")
 def home():
-    return {"message": "Document Search AI Agent v2.0 Running"}
+    return {"message": "DocuMind AI — Agentic RAG Running"}
 
 
-@app.post("/upload", summary="Upload a document")
-async def upload_document(
-    file: UploadFile = File(...),
-    x_session_id: Optional[str] = Header(default=None)  # optional session header
-):
+# ── Upload ────────────────────────────────────────────────
+
+@app.post("/upload")
+async def upload_document(file: UploadFile = File(...)):
     filepath = os.path.join(UPLOAD_FOLDER, file.filename)
 
     with open(filepath, "wb") as buffer:
-        buffer.write(await file.read())
+        content = await file.read()
+        buffer.write(content)
 
-    try:
-        upload_to_github(filepath, file.filename)
-    except Exception as e:
-        print(f"[GitHub] Warning: {e}")
+    upload_to_github(filepath, file.filename)
 
-    try:
-        text = extract_text(filepath)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    if not text.strip():
-        raise HTTPException(status_code=400, detail="Document appears empty or unreadable.")
-
+    text   = extract_text(filepath)
     chunks = chunk_text(text)
+    store_chunks(chunks, file.filename)
 
-    # Pass session_id — isolates data per user
-    store_chunks(chunks, file.filename, session_id=x_session_id)
+    print(f"[Upload] Stored {len(chunks)} chunks for '{file.filename}'")
 
     return {
-        "message":       "File uploaded and indexed successfully",
+        "message":       "File uploaded successfully",
         "filename":      file.filename,
-        "chunks_stored": len(chunks),
-        "session_id":    x_session_id or "shared"
+        "chunks_stored": len(chunks)
     }
 
 
-class QuestionRequest(BaseModel):
+# ── Chat ──────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
     question:   str
-    filename:   Optional[str] = None
-    session_id: Optional[str] = None  # client passes this to scope retrieval
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [{
-                "question":   "What is the research methodology?",
-                "filename":   "Research Proposal.pdf",
-                "session_id": "user_abc123"
-            }]
-        }
-    }
+    session_id: str = "default"
 
 
-@app.post("/chat", summary="Ask a question")
-async def chat(request: QuestionRequest):
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    session_id = request.session_id
+    user_msg   = request.question
 
-    if not request.question.strip():
-        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+    # 1. Get conversation history for this session
+    conversation_history = get_history_as_text(session_id)
 
-    try:
-        retrieved_chunks, confidence, iteration_log = agentic_retrieve(
-            request.question,
-            filename_filter=request.filename,
-            session_id=request.session_id        # scoped retrieval
-        )
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Retrieval error: {str(e)}")
+    # 2. Get available files from vector store
+    result          = collection.get(include=["metadatas"])
+    available_files = list({m["filename"] for m in result.get("metadatas", [])})
 
-    if not retrieved_chunks:
-        return {
-            "question":         request.question,
-            "answer":           "No relevant documents found. Please upload relevant files first.",
-            "confidence_label": "Low",
-            "confidence_score": 0.0,
-            "verification":     "NOT VERIFIED",
-            "sources":          []
-        }
+    # 3. Classify intent (passes history + available files for context)
+    classified = classify_intent(user_msg, conversation_history, available_files)
 
-    try:
-        raw_answer = generate_answer(request.question, retrieved_chunks)
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Generation error: {str(e)}")
+    print(f"[Chat] Session: {session_id} | Intent: {classified['intent']} | Files: {classified['target_files']}")
 
-    try:
-        verification, final_answer = verify_answer(
-            request.question, raw_answer, retrieved_chunks
-        )
-    except Exception:
-        verification, final_answer = "VERIFIED", raw_answer
+    # 4. Store user message in memory
+    add_message(session_id, "user", user_msg)
 
-    result = format_response(
-        question=request.question,
-        answer=final_answer,
-        retrieved_chunks=retrieved_chunks,
-        confidence=confidence,
-        verification=verification,
-        iteration_log=iteration_log
+    # 5. Route through the full agentic pipeline
+    result = route(classified, user_msg, conversation_history)
+
+    # 6. Store assistant response in memory
+    add_message(
+        session_id,
+        "assistant",
+        result.get("answer", ""),
+        metadata={"intent": result.get("intent"), "sources": result.get("sources", [])}
     )
+
     return result
 
 
-@app.get("/documents", summary="List documents")
-def list_documents(session_id: Optional[str] = None):
-    from vector_store import client as chroma_client, collection
-    if session_id:
-        try:
-            col = chroma_client.get_collection(f"documents_{session_id}")
-        except Exception:
-            return {"documents": [], "count": 0, "session_id": session_id}
-    else:
-        col = collection
+# ── Session management ────────────────────────────────────
 
-    results   = col.get(include=["metadatas"])
-    filenames = list({m["filename"] for m in results["metadatas"]})
-    return {"documents": filenames, "count": len(filenames), "session_id": session_id or "shared"}
-
-
-@app.delete("/clear", summary="Clear documents")
-def clear_database(session_id: Optional[str] = None):
-    from vector_store import client as chroma_client
-    if session_id:
-        col_name = f"documents_{session_id}"
-        chroma_client.delete_collection(col_name)
-        chroma_client.get_or_create_collection(col_name)
-        return {"message": f"Session '{session_id}' cleared."}
-    else:
-        chroma_client.delete_collection("documents")
-        chroma_client.get_or_create_collection("documents")
-        return {"message": "Shared database cleared."}
+@app.delete("/session/{session_id}")
+def delete_session(session_id: str):
+    clear_session(session_id)
+    return {"message": f"Session '{session_id}' cleared."}
