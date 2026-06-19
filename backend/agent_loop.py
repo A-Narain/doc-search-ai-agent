@@ -12,7 +12,8 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 MODEL  = "llama-3.1-8b-instant"
 
 MAX_ITERATIONS       = 3
-CONFIDENCE_THRESHOLD = 0.40
+CONFIDENCE_THRESHOLD = 0.40   # "good enough to answer confidently"
+MINIMUM_FLOOR        = 0.15   # below this, there's genuinely not enough info
 
 
 def compute_confidence(retrieved_chunks):
@@ -49,7 +50,7 @@ Return ONLY the new query. No explanation."""
                 return current_query  # fallback
 
 
-def agentic_retrieve(question, filename_filter=None, session_id=None):  # ← session_id added
+def agentic_retrieve(question, filename_filter=None, session_id=None):
 
     query           = rewrite_query(question)
     best_chunks     = []
@@ -66,7 +67,7 @@ def agentic_retrieve(question, filename_filter=None, session_id=None):  # ← se
         chunks = retrieve_chunks(
             query,
             filename_filter=filename_filter,
-            session_id=session_id          # ← passed to retriever
+            session_id=session_id
         )
 
         confidence = compute_confidence(chunks)
@@ -97,4 +98,10 @@ def agentic_retrieve(question, filename_filter=None, session_id=None):  # ← se
         else:
             print(f"[Agent] Max iterations reached. Returning best result.")
 
-    return best_chunks, best_confidence, iteration_log
+    # ── Adequacy gate ──────────────────────────────────────
+    # Explicit yes/no: is there enough information to answer
+    # accurately, or should the agent refuse rather than risk
+    # fabricating an answer from weak/irrelevant chunks?
+    is_adequate = best_confidence >= MINIMUM_FLOOR and len(best_chunks) > 0
+
+    return best_chunks, best_confidence, iteration_log, is_adequate

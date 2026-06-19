@@ -48,7 +48,7 @@ def groq_generate(prompt: str, max_tokens: int = 1000) -> str:
 def handle_question(refined_message, original_message, target_files, conversation_history):
     filename_filter = target_files[0] if len(target_files) == 1 else None
 
-    retrieved_chunks, confidence, iteration_log = agentic_retrieve(
+    retrieved_chunks, confidence, iteration_log, is_adequate = agentic_retrieve(
         refined_message,
         filename_filter=filename_filter
     )
@@ -56,6 +56,24 @@ def handle_question(refined_message, original_message, target_files, conversatio
     if not retrieved_chunks:
         print("[Router] No chunks retrieved — falling back to general knowledge")
         return handle_general_knowledge(original_message, conversation_history)
+
+    # ── Adequacy gate ───────────────────────────────────────
+    # If retrieval confidence never cleared the minimum floor,
+    # refuse rather than risk generating a fabricated answer.
+    if not is_adequate:
+        print(f"[Router] Retrieval inadequate (confidence: {confidence:.3f}) — refusing to fabricate")
+        return {
+            "intent":  "question",
+            "answer":  (
+                "I don't have enough relevant information in the indexed documents "
+                "to answer this accurately. Try rephrasing your question, scoping to "
+                "a specific document, or uploading a file that covers this topic."
+            ),
+            "confidence":       round(confidence, 3),
+            "verification":     "NOT_ATTEMPTED",
+            "agent_iterations": iteration_log,
+            "sources":          []
+        }
 
     # Guard: if multiple docs returned but none was specifically requested, ask user to clarify
     if not filename_filter:
@@ -91,7 +109,7 @@ def handle_summarise(target_files, conversation_history):
     all_chunks = []
 
     for filename in target_files:
-        chunks, _, _ = agentic_retrieve(
+        chunks, _, _, _ = agentic_retrieve(
             f"summarise {filename}",
             filename_filter=filename
         )
@@ -136,7 +154,7 @@ def handle_compare(refined_message, target_files):
 
     per_file_chunks = {}
     for filename in target_files:
-        chunks, _, _ = agentic_retrieve(refined_message, filename_filter=filename)
+        chunks, _, _, _ = agentic_retrieve(refined_message, filename_filter=filename)
         per_file_chunks[filename] = chunks
 
     sections = []
@@ -184,7 +202,7 @@ def handle_edit(edit_instruction, target_files):
             "sources": []
         }
 
-    retrieved_chunks, _, iteration_log = agentic_retrieve(
+    retrieved_chunks, _, iteration_log, _ = agentic_retrieve(
         edit_instruction,
         filename_filter=filename
     )

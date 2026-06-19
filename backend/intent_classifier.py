@@ -22,15 +22,21 @@ INTENTS = {
 }
 
 
-def classify_intent(user_message, conversation_history, available_files):
+def classify_intent(user_message, conversation_history, available_files, scoped_file=None):
     files_str = ", ".join(available_files) if available_files else "none"
     intent_descriptions = "\n".join(f'  "{k}": {v}' for k, v in INTENTS.items())
+
+    scope_note = (
+        f'\nThe user has currently scoped the conversation to this specific file: "{scoped_file}". '
+        f'If target_files is ambiguous or unmentioned, default to this file.\n'
+        if scoped_file else ""
+    )
 
     prompt = f"""You are an intent classifier for a document AI agent.
 
 Available documents in the system:
 {files_str}
-
+{scope_note}
 Recent conversation history:
 {conversation_history}
 
@@ -51,8 +57,9 @@ Intent definitions:
 
 Rules:
 - If the user uses words like "remove", "delete", "change", "update", "replace", "edit", "modify", "rewrite" anything INSIDE a document, classify as "edit"
-- For "edit" intent, target_files MUST be filled — infer the filename from conversation history or available documents if not explicitly stated
+- For "edit" intent, target_files MUST be filled — infer the filename from conversation history, the scoped file, or available documents if not explicitly stated
 - If only one document is available and the user says "my resume", "the document", "it", "that file" — use that filename
+- If a scoped file is provided above and the user's message doesn't name a different file, prefer the scoped file for target_files
 - NEVER classify document modification requests as "question" or "general_knowledge"
 - Only classify as "question" if the user is asking for information FROM a document, not changing it
 - If the question is clearly about general knowledge and does NOT reference any uploaded document, classify as "general_knowledge"
@@ -60,6 +67,8 @@ Rules:
 - For compare intent, target_files should contain 2+ files
 - Return ONLY the JSON object, no markdown, no explanation
 """
+
+    result = None
 
     for attempt in range(3):
         try:
@@ -84,7 +93,7 @@ Rules:
             result = {
                 "intent":           "question",
                 "refined_message":  user_message,
-                "target_files":     [],
+                "target_files":     [scoped_file] if scoped_file else [],
                 "edit_instruction": None,
                 "confidence":       0.5
             }
@@ -96,14 +105,14 @@ Rules:
                 result = {
                     "intent":           "question",
                     "refined_message":  user_message,
-                    "target_files":     [],
+                    "target_files":     [scoped_file] if scoped_file else [],
                     "edit_instruction": None,
                     "confidence":       0.5
                 }
 
     result.setdefault("intent",           "question")
     result.setdefault("refined_message",  user_message)
-    result.setdefault("target_files",     [])
+    result.setdefault("target_files",     [scoped_file] if scoped_file else [])
     result.setdefault("edit_instruction", None)
     result.setdefault("confidence",       0.5)
 
