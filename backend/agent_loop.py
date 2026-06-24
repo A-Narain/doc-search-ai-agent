@@ -12,7 +12,7 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 MODEL  = "llama-3.1-8b-instant"
 
 MAX_ITERATIONS       = 3
-CONFIDENCE_THRESHOLD = 0.40   # "good enough to answer confidently"
+CONFIDENCE_THRESHOLD = 0.60   # "good enough to answer confidently"
 MINIMUM_FLOOR        = 0.15   # below this, there's genuinely not enough info
 
 

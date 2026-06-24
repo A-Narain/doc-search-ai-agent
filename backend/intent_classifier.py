@@ -19,6 +19,7 @@ INTENTS = {
     "clarify":           "User is following up or referring to something from earlier in the conversation",
     "chitchat":          "General conversation, greetings, small talk",
     "general_knowledge": "A factual or conceptual question not related to any uploaded document",
+    "database_query":    "User is asking about business data such as employees, departments, or projects stored in the application database",
 }
 
 
@@ -45,7 +46,7 @@ Current user message:
 
 Classify the user's intent and extract parameters. Return ONLY valid JSON with this exact structure:
 {{
-  "intent": "<one of: question, edit, summarise, compare, list, delete, clarify, chitchat, general_knowledge>",
+  "intent": "<one of: question, edit, summarise, compare, list, delete, clarify, chitchat, general_knowledge, database_query>",
   "refined_message": "<rewrite the user message resolving any references to prior conversation>",
   "target_files": ["<filename if mentioned or inferable, else empty list>"],
   "edit_instruction": "<only if intent is edit: the specific change to make, else null>",
@@ -63,6 +64,7 @@ Rules:
 - NEVER classify document modification requests as "question" or "general_knowledge"
 - Only classify as "question" if the user is asking for information FROM a document, not changing it
 - If the question is clearly about general knowledge and does NOT reference any uploaded document, classify as "general_knowledge"
+- If the question asks about employees, departments, projects, or other structured business records (not document content), classify as "database_query"
 - target_files should only contain filenames from the available documents list above
 - For compare intent, target_files should contain 2+ files
 - Return ONLY the JSON object, no markdown, no explanation

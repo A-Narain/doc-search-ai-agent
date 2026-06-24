@@ -12,6 +12,8 @@ from edit_service import (
     apply_edit_to_chunk,
     rebuild_document_with_edits
 )
+
+from db_query_agent import run_database_query
 from chunking import chunk_text
 from vector_store import store_chunks, collection
 from github_service import upload_to_github
@@ -54,8 +56,12 @@ def handle_question(refined_message, original_message, target_files, conversatio
     )
 
     if not retrieved_chunks:
-        print("[Router] No chunks retrieved — falling back to general knowledge")
-        return handle_general_knowledge(original_message, conversation_history)
+        print("[Router] No chunks retrieved — declining, no general knowledge fallback")
+        return {
+        "intent":  "question",
+        "answer":  "I couldn't find anything relevant in your uploaded documents to answer this.",
+        "sources": []
+    }
 
     # ── Adequacy gate ───────────────────────────────────────
     # If retrieval confidence never cleared the minimum floor,
@@ -316,26 +322,45 @@ User: {message}
         "sources": []
     }
 
+# ── Tool: Database query ──────────────────────────────────
 
-# ── Tool: General knowledge ───────────────────────────────
+def handle_database_query(original_message):
+    result = run_database_query(original_message)
 
-def handle_general_knowledge(message, conversation_history):
-    prompt = f"""You are an intelligent AI assistant with broad general knowledge.
-Answer the following question accurately and clearly using your own knowledge.
-If the question is ambiguous, clarify your assumptions.
+    if not result["success"]:
+        # Covers both out-of-scope refusals and validation/execution failures
+        return {
+            "intent":  "database_query",
+            "answer":  result.get("answer", "I couldn't process that database question."),
+            "sql":     result.get("sql"),
+            "sources": []
+        }
 
-Conversation so far:
-{conversation_history}
+    # ── Format the raw rows into a readable answer ────────
+    columns   = result["columns"]
+    rows      = result["rows"]
+    row_count = result["row_count"]
 
-Question: {message}
-"""
-    answer = groq_generate(prompt)
+    if row_count == 0:
+        answer = "I ran a query against the database, but no matching records were found."
+    else:
+        lines = [", ".join(columns)]
+        for row in rows:
+            lines.append(", ".join(str(v) for v in row))
+        answer = (
+            f"Found {row_count} result(s):\n\n" + "\n".join(lines)
+        )
+
     return {
-        "intent":  "general_knowledge",
-        "answer":  answer,
-        "sources": [],
-        "note":    "Answered from general knowledge, not from uploaded documents."
+        "intent":    "database_query",
+        "answer":    answer,
+        "sql":       result["sql"],
+        "row_count": row_count,
+        "sources":   []
     }
+
+
+
 
 
 # ── Main router ───────────────────────────────────────────
@@ -361,6 +386,12 @@ def route(classified_intent: dict, original_message: str, conversation_history: 
     elif intent == "chitchat":
         return handle_chitchat(original_message, conversation_history)
     elif intent == "general_knowledge":
-        return handle_general_knowledge(original_message, conversation_history)
+       return {
+        "intent":  "general_knowledge",
+        "answer":  "I'm only able to help with questions about your uploaded documents. I can't answer general knowledge questions unrelated to them.",
+        "sources": []
+              }
+    elif intent == "database_query":
+        return handle_database_query(original_message)
     else:
         return handle_question(refined_message, original_message, target_files, conversation_history)

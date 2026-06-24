@@ -33,7 +33,6 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); height: 100vh; display: flex; overflow: hidden; font-size: 14px; }
 
-  /* SIDEBAR */
   .sidebar { width: 272px; min-width: 272px; background: var(--navy); display: flex; flex-direction: column; box-shadow: 2px 0 12px rgba(0,0,0,0.15); }
   .logo { padding: 20px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
   .logo-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; font-weight: 700; flex-shrink: 0; }
@@ -73,7 +72,6 @@
   .btn-clear { width: 100%; padding: 7px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: rgba(255,255,255,0.45); font-family: var(--sans); font-size: 11px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
   .btn-clear:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
 
-  /* MAIN */
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
   .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow); flex-shrink: 0; }
   .status-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 500; }
@@ -86,7 +84,6 @@
   .tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
   .topbar-right { margin-left: auto; font-size: 11px; color: var(--muted2); font-family: var(--mono); }
 
-  /* CHAT */
   .chat-area { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
   .chat-area::-webkit-scrollbar { width: 5px; }
   .chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
@@ -99,7 +96,6 @@
   .chip { padding: 7px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.15s; color: var(--text2); font-weight: 500; box-shadow: var(--shadow); }
   .chip:hover { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
 
-  /* MESSAGES */
   .msg { display: flex; gap: 12px; animation: fadeUp 0.25s ease; }
   .msg.user { flex-direction: row-reverse; align-self: flex-end; max-width: 75%; }
   .msg.bot  { align-self: flex-start; max-width: 85%; }
@@ -110,7 +106,6 @@
   .msg.user .bubble { background: var(--navy); color: rgba(255,255,255,0.92); border-top-right-radius: 2px; }
   .msg.bot  .bubble { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-top-left-radius: 2px; }
 
-  /* INTENT BADGE */
   .intent-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-bottom: 9px; font-weight: 500; }
   .intent-question          { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
   .intent-edit              { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
@@ -121,12 +116,10 @@
   .intent-chitchat          { background: #f9fafb; color: var(--muted); border: 1px solid var(--border); }
   .intent-error             { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
 
-  /* SOURCES */
   .sources { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .sources-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
   .source-chip { font-family: var(--mono); font-size: 10px; padding: 3px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--text2); }
 
-  /* CONFIDENCE */
   .confidence { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 10px; color: var(--muted); font-family: var(--mono); }
   .conf-bar { width: 80px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
   .conf-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
@@ -134,7 +127,6 @@
   .conf-mid  { background: var(--amber); }
   .conf-low  { background: var(--red); }
 
-  /* EDIT DIFF */
   .edit-diff { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
   .diff-item { font-family: var(--mono); font-size: 11px; }
   .diff-before { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; padding: 5px 10px; border-radius: 4px; margin-bottom: 3px; }
@@ -142,14 +134,12 @@
 
   .gk-note { margin-top: 8px; font-size: 11px; color: var(--muted2); font-family: var(--mono); }
 
-  /* TYPING */
   .typing { display: flex; gap: 4px; align-items: center; height: 20px; }
   .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted2); animation: bounce 1.2s infinite; }
   .typing span:nth-child(2) { animation-delay: 0.2s; }
   .typing span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-5px);} }
 
-  /* INPUT */
   .input-area { padding: 16px 32px 20px; border-top: 1px solid var(--border); background: var(--surface); box-shadow: 0 -1px 8px rgba(0,0,0,0.04); flex-shrink: 0; }
   .scope-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .scope-label { font-size: 11px; color: var(--muted); font-weight: 500; }
@@ -166,7 +156,6 @@
   .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
   .input-hint { font-size: 10px; color: var(--muted2); margin-top: 8px; font-family: var(--mono); }
 
-  /* TOAST */
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 16px; font-size: 12px; font-weight: 500; box-shadow: var(--shadow-md); z-index: 1000; animation: toastIn 0.25s ease; display: flex; align-items: center; gap: 8px; }
   @keyframes toastIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
   .toast.success { border-left: 3px solid var(--teal); }
@@ -236,7 +225,7 @@
     <div class="empty-state" id="emptyState">
       <div class="empty-icon">🤖</div>
       <div class="empty-title">How can I help you?</div>
-      <div class="empty-sub">Ask questions from your documents, get general knowledge answers, summarise or compare files, or instruct me to edit document content.</div>
+      <div class="empty-sub">Upload documents, ask questions, summarise, compare, or edit content using AI.</div>
       <div class="suggestion-chips">
         <div class="chip" onclick="sendSuggestion('What documents have you indexed?')">What docs are indexed?</div>
         <div class="chip" onclick="sendSuggestion('Summarise all my documents')">Summarise documents</div>
@@ -266,7 +255,7 @@
 </main>
 
 <script>
-const API = 'http://127.0.0.1:8000';
+const API = '';  // same domain — works locally and on Railway
 
 let sessionId = localStorage.getItem('docmind_session') || crypto.randomUUID();
 localStorage.setItem('docmind_session', sessionId);
@@ -285,12 +274,11 @@ function setMode(mode, el) {
     chat:      'Ask a question about your documents, or anything general…',
     summarise: 'Which document should I summarise? Or leave blank for all.',
     compare:   'Which documents should I compare? e.g. "compare report.pdf and policy.docx"',
-    edit:      'Describe the edit — e.g. "in policy.pdf change refund period from 14 to 30 days"'
+    edit:      'Describe the edit — e.g. "change refund period from 14 to 30 days" (select a doc in Scope first)'
   };
   document.getElementById('msgInput').placeholder = ph[mode];
 }
 
-// Upload
 const uploadZone = document.getElementById('uploadZone');
 const fileInput  = document.getElementById('fileInput');
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
@@ -304,8 +292,8 @@ async function handleFiles(files) {
 }
 
 async function uploadFile(file) {
-  const prog = document.getElementById('uploadProgress');
-  const fill = document.getElementById('progressFill');
+  const prog  = document.getElementById('uploadProgress');
+  const fill  = document.getElementById('progressFill');
   const label = document.getElementById('progressLabel');
   prog.style.display = 'block';
   label.textContent = 'Uploading ' + file.name + '…';
@@ -314,21 +302,30 @@ async function uploadFile(file) {
   fd.append('file', file);
   try {
     fill.style.width = '75%';
-    const res = await fetch(API + '/upload', { method: 'POST', body: fd });
+    const res  = await fetch(API + '/upload', { method: 'POST', body: fd });
     const data = await res.json();
     fill.style.width = '100%';
-    if (res.ok) { label.textContent = '✓ ' + file.name + ' — ' + data.chunks_stored + ' chunks'; showToast(file.name + ' uploaded', 'success'); }
-    else { label.textContent = '✗ ' + (data.detail || 'Upload failed'); showToast(data.detail || 'Upload failed', 'error'); }
-  } catch { label.textContent = '✗ Connection error'; showToast('Could not reach backend', 'error'); }
+    if (res.ok) {
+      label.textContent = '✓ ' + file.name + ' — ' + data.chunks_stored + ' chunks';
+      showToast(file.name + ' uploaded', 'success');
+    } else {
+      label.textContent = '✗ ' + (data.detail || 'Upload failed');
+      showToast(data.detail || 'Upload failed', 'error');
+    }
+  } catch {
+    label.textContent = '✗ Connection error';
+    showToast('Could not reach backend', 'error');
+  }
   setTimeout(() => { prog.style.display = 'none'; fill.style.width = '0%'; }, 3500);
 }
 
 async function loadDocuments() {
   try {
-    const res = await fetch(API + '/documents');
+    const res  = await fetch(API + '/documents');
     const data = await res.json();
-    documents = data.documents || [];
-    renderDocs(); updateScopeSelect();
+    documents  = data.documents || [];
+    renderDocs();
+    updateScopeSelect();
   } catch {}
 }
 
@@ -337,11 +334,11 @@ function renderDocs() {
   if (!documents.length) { list.innerHTML = '<div class="no-docs">No documents indexed yet</div>'; return; }
   const icons = { pdf:'📄',docx:'📝',xlsx:'📊',xls:'📊',pptx:'📑',msg:'📧',html:'🌐',htm:'🌐',txt:'📃',md:'📋' };
   list.innerHTML = documents.map(doc => {
-    const ext = doc.filename.split('.').pop().toLowerCase();
-    return '<div class="doc-item" onclick="selectDoc(\'' + doc.filename + '\',this)" title="' + doc.filename + '">' +
+    const ext = doc.split('.').pop().toLowerCase();
+    return '<div class="doc-item" onclick="selectDoc(\'' + doc + '\',this)" title="' + doc + '">' +
       '<span class="doc-icon">' + (icons[ext]||'📄') + '</span>' +
-      '<div class="doc-info"><div class="doc-name">' + escHtml(doc.filename) + '</div><div class="doc-meta">' + doc.chunks + ' chunks</div></div>' +
-      '<span class="doc-delete" onclick="deleteDoc(event,\'' + doc.filename + '\')" title="Remove">✕</span></div>';
+      '<div class="doc-info"><div class="doc-name">' + escHtml(doc) + '</div></div>' +
+      '<span class="doc-delete" onclick="deleteDoc(event,\'' + doc + '\')" title="Remove">✕</span></div>';
   }).join('');
 }
 
@@ -356,7 +353,8 @@ function selectDoc(filename, el) {
 function updateScopeSelect() {
   const sel = document.getElementById('scopeSelect');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">All documents</option>' + documents.map(d => '<option value="' + d.filename + '">' + d.filename + '</option>').join('');
+  sel.innerHTML = '<option value="">All documents</option>' +
+    documents.map(d => '<option value="' + d + '">' + d + '</option>').join('');
   if (cur) sel.value = cur;
 }
 
@@ -376,30 +374,60 @@ function sendSuggestion(text) { document.getElementById('msgInput').value = text
 
 async function sendMessage() {
   const input = document.getElementById('msgInput');
-  const text = input.value.trim();
+  const text  = input.value.trim();
   if (!text) return;
+
   hideEmpty();
   appendUserMsg(text);
   input.value = '';
   input.style.height = 'auto';
+
   const typingEl = appendTyping();
   document.getElementById('sendBtn').disabled = true;
   document.getElementById('headerSub').textContent = 'Processing…';
-  let question = text;
-  if (currentMode === 'summarise' && !text.toLowerCase().includes('summar')) question = 'Summarise: ' + text;
-  if (currentMode === 'compare' && !text.toLowerCase().includes('compare')) question = 'Compare: ' + text;
+
   try {
-    const res = await fetch(API + '/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: question, session_id: sessionId })
-    });
-    const data = await res.json();
+    let data;
+    const scopedFile = document.getElementById('scopeSelect').value;
+
+    if (currentMode === 'edit') {
+      if (!scopedFile) {
+        typingEl.remove();
+        appendBotMsg({ answer: 'Please select a document from the Scope dropdown before editing.', intent: 'error', sources: [] });
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('headerSub').textContent = 'Ready';
+        return;
+      }
+      const res = await fetch(API + '/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instruction: text, filename: scopedFile })
+      });
+      data = await res.json();
+      if (!res.ok) data = { answer: data.detail || 'Edit failed.', intent: 'error', sources: [] };
+      else data.intent = 'edit';
+
+    } else {
+      let question = text;
+      if (currentMode === 'summarise' && !text.toLowerCase().includes('summar')) question = 'Summarise: ' + text;
+      if (currentMode === 'compare'  && !text.toLowerCase().includes('compare')) question = 'Compare: '   + text;
+
+      const res = await fetch(API + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question, session_id: sessionId, filename: scopedFile || null })
+      });
+      data = await res.json();
+    }
+
     typingEl.remove();
     appendBotMsg(data);
+
   } catch {
     typingEl.remove();
-    appendBotMsg({ answer: 'Could not reach the backend. Please ensure the server is running at ' + API + '.', intent: 'error', sources: [] });
+    appendBotMsg({ answer: 'Could not reach the backend.', intent: 'error', sources: [] });
   }
+
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('headerSub').textContent = 'Ready';
   loadDocuments();
@@ -408,7 +436,8 @@ async function sendMessage() {
 function hideEmpty() { const e = document.getElementById('emptyState'); if (e) e.remove(); }
 
 function appendUserMsg(text) {
-  document.getElementById('chatArea').innerHTML += '<div class="msg user"><div class="avatar">You</div><div class="bubble">' + escHtml(text) + '</div></div>';
+  document.getElementById('chatArea').innerHTML +=
+    '<div class="msg user"><div class="avatar">You</div><div class="bubble">' + escHtml(text) + '</div></div>';
   scrollBottom();
 }
 
@@ -423,32 +452,54 @@ function appendTyping() {
 
 function appendBotMsg(data) {
   const intent = data.intent || 'question';
-  const labels = { question:'From Documents', edit:'Document Edit', summarise:'Summary', compare:'Comparison', list:'Document Index', general_knowledge:'General Knowledge', chitchat:'Conversation', error:'Error' };
+  const labels = {
+    question:'From Documents', edit:'Document Edit', summarise:'Summary',
+    compare:'Comparison', list:'Document Index', general_knowledge:'General Knowledge',
+    chitchat:'Conversation', error:'Error'
+  };
+
   let sourcesHtml = '';
   if (data.sources && data.sources.length) {
-    sourcesHtml = '<div class="sources"><span class="sources-label">Sources</span>' + data.sources.map(s => '<span class="source-chip">' + escHtml(s) + '</span>').join('') + '</div>';
+    sourcesHtml = '<div class="sources"><span class="sources-label">Sources</span>' +
+      data.sources.map(s => '<span class="source-chip">' + escHtml(s) + '</span>').join('') + '</div>';
   }
+
   let confHtml = '';
   if (data.confidence_score != null && data.confidence_score > 0) {
     const pct = Math.round(data.confidence_score * 100);
     const cls = pct > 70 ? 'conf-high' : pct > 40 ? 'conf-mid' : 'conf-low';
-    confHtml = '<div class="confidence">Confidence <div class="conf-bar"><div class="conf-fill ' + cls + '" style="width:' + pct + '%"></div></div> ' + pct + '%' + (data.confidence_label ? ' · ' + escHtml(data.confidence_label) : '') + (data.verification ? ' · ' + escHtml(data.verification) : '') + '</div>';
+    confHtml = '<div class="confidence">Confidence <div class="conf-bar"><div class="conf-fill ' + cls +
+      '" style="width:' + pct + '%"></div></div> ' + pct + '%' +
+      (data.confidence_label ? ' · ' + escHtml(data.confidence_label) : '') +
+      (data.verification     ? ' · ' + escHtml(data.verification)     : '') + '</div>';
   }
+
   let diffHtml = '';
   if (intent === 'edit' && data.changes && data.changes.length) {
-    diffHtml = '<div class="edit-diff">' + data.changes.map(c => '<div class="diff-item"><div class="diff-before">− ' + escHtml(c.before) + '</div><div class="diff-after">+ ' + escHtml(c.after) + '</div></div>').join('') + '</div>';
+    diffHtml = '<div class="edit-diff">' + data.changes.map(c =>
+      '<div class="diff-item"><div class="diff-before">− ' + escHtml(c.before) + '</div>' +
+      '<div class="diff-after">+ ' + escHtml(c.after) + '</div></div>'
+    ).join('') + '</div>';
   }
-  let noteHtml = (intent === 'general_knowledge' && data.note) ? '<div class="gk-note">' + escHtml(data.note) + '</div>' : '';
-  document.getElementById('chatArea').innerHTML += '<div class="msg bot"><div class="avatar">AI</div><div class="bubble"><div class="intent-badge intent-' + intent + '">' + (labels[intent]||intent) + '</div><div>' + formatAnswer(data.answer||'') + '</div>' + diffHtml + noteHtml + sourcesHtml + confHtml + '</div></div>';
+
+  const noteHtml = (intent === 'general_knowledge' && data.note)
+    ? '<div class="gk-note">' + escHtml(data.note) + '</div>' : '';
+
+  document.getElementById('chatArea').innerHTML +=
+    '<div class="msg bot"><div class="avatar">AI</div><div class="bubble">' +
+    '<div class="intent-badge intent-' + intent + '">' + (labels[intent]||intent) + '</div>' +
+    '<div>' + formatAnswer(data.answer||'') + '</div>' +
+    diffHtml + noteHtml + sourcesHtml + confHtml +
+    '</div></div>';
   scrollBottom();
 }
 
 function formatAnswer(text) {
   return escHtml(text)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`(.*?)`/g, '<code style="font-family:var(--mono);background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">$1</code>')
-    .replace(/\n/g, '<br>');
+    .replace(/\*(.*?)\*/g,     '<em>$1</em>')
+    .replace(/`(.*?)`/g,       '<code style="font-family:var(--mono);background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:12px;">$1</code>')
+    .replace(/\n/g,            '<br>');
 }
 
 function escHtml(s) {
@@ -463,7 +514,17 @@ async function clearSession() {
   sessionId = crypto.randomUUID();
   localStorage.setItem('docmind_session', sessionId);
   document.getElementById('sessionDisplay').textContent = 'Session: ' + sessionId.slice(0,8) + '…';
-  document.getElementById('chatArea').innerHTML = '<div class="empty-state" id="emptyState"><div class="empty-icon">🤖</div><div class="empty-title">How can I help you?</div><div class="empty-sub">Ask questions from your documents, get general knowledge answers, summarise or compare files, or instruct me to edit document content.</div><div class="suggestion-chips"><div class="chip" onclick="sendSuggestion(\'What documents have you indexed?\')">What docs are indexed?</div><div class="chip" onclick="sendSuggestion(\'Summarise all my documents\')">Summarise documents</div><div class="chip" onclick="sendSuggestion(\'What is machine learning?\')">General knowledge</div><div class="chip" onclick="sendSuggestion(\'Compare the two uploaded documents\')">Compare docs</div></div></div>';
+  document.getElementById('chatArea').innerHTML =
+    '<div class="empty-state" id="emptyState">' +
+    '<div class="empty-icon">🤖</div>' +
+    '<div class="empty-title">How can I help you?</div>' +
+    '<div class="empty-sub">Upload documents, ask questions, summarise, compare, or edit content using AI.</div>' +
+    '<div class="suggestion-chips">' +
+    '<div class="chip" onclick="sendSuggestion(\'What documents have you indexed?\')">What docs are indexed?</div>' +
+    '<div class="chip" onclick="sendSuggestion(\'Summarise all my documents\')">Summarise documents</div>' +
+    '<div class="chip" onclick="sendSuggestion(\'What is machine learning?\')">General knowledge</div>' +
+    '<div class="chip" onclick="sendSuggestion(\'Compare the two uploaded documents\')">Compare docs</div>' +
+    '</div></div>';
 }
 
 function showToast(msg, type) {
