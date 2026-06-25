@@ -328,7 +328,6 @@ def handle_database_query(original_message):
     result = run_database_query(original_message)
 
     if not result["success"]:
-        # Covers both out-of-scope refusals and validation/execution failures
         return {
             "intent":  "database_query",
             "answer":  result.get("answer", "I couldn't process that database question."),
@@ -336,31 +335,13 @@ def handle_database_query(original_message):
             "sources": []
         }
 
-    # ── Format the raw rows into a readable answer ────────
-    columns   = result["columns"]
-    rows      = result["rows"]
-    row_count = result["row_count"]
-
-    if row_count == 0:
-        answer = "I ran a query against the database, but no matching records were found."
-    else:
-        lines = [", ".join(columns)]
-        for row in rows:
-            lines.append(", ".join(str(v) for v in row))
-        answer = (
-            f"Found {row_count} result(s):\n\n" + "\n".join(lines)
-        )
-
     return {
         "intent":    "database_query",
-        "answer":    answer,
+        "answer":    result["answer"],
         "sql":       result["sql"],
-        "row_count": row_count,
+        "row_count": result["row_count"],
         "sources":   []
     }
-
-
-
 
 
 # ── Main router ───────────────────────────────────────────
@@ -386,11 +367,11 @@ def route(classified_intent: dict, original_message: str, conversation_history: 
     elif intent == "chitchat":
         return handle_chitchat(original_message, conversation_history)
     elif intent == "general_knowledge":
-       return {
-        "intent":  "general_knowledge",
-        "answer":  "I'm only able to help with questions about your uploaded documents. I can't answer general knowledge questions unrelated to them.",
-        "sources": []
-              }
+        return {
+            "intent":  "general_knowledge",
+            "answer":  "I'm only able to help with questions about your uploaded documents. I can't answer general knowledge questions unrelated to them.",
+            "sources": []
+        }
     elif intent == "database_query":
         return handle_database_query(original_message)
     else:

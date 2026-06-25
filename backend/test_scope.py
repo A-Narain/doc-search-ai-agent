@@ -7,6 +7,8 @@ questions = [
     "Write me a haiku about autumn",
     "How many departments do we have?",
     "What's today's weather in Mumbai?",
+    "Name 3 employees",
+    "Name the active projects",
 ]
 
 for q in questions:

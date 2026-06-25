@@ -5,6 +5,8 @@ test_messages = [
     "Which employees work in Engineering?",
     "What's the capital of France?",
     "List all active projects",
+    "name the active project",
+    "how many employees are there?",
 ]
 
 for msg in test_messages:

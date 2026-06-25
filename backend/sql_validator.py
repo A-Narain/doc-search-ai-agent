@@ -118,7 +118,15 @@ def validate_sql(sql: str) -> str:
                     f"Column '{t}' is not in the allowed schema. Query rejected."
                 )
     # ── Check 6: must include a LIMIT clause ──────────────
-    if "LIMIT" not in upper:
+    # Exception: a pure aggregate query (COUNT/SUM/AVG/MAX/MIN)
+    # with no GROUP BY always returns exactly one row, so a
+    # LIMIT clause is unnecessary and not required.
+    is_pure_aggregate = (
+        re.search(r'\b(COUNT|SUM|AVG|MAX|MIN)\s*\(', upper) is not None
+        and "GROUP BY" not in upper
+    )
+
+    if "LIMIT" not in upper and not is_pure_aggregate:
         raise SQLValidationError(
             "Query must include a LIMIT clause. Query rejected."
         )

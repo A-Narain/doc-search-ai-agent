@@ -3,6 +3,55 @@ from sql_generator import generate_sql
 from sql_executor import execute_safe_query
 
 
+import os
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+MODEL  = "llama-3.1-8b-instant"
+
+
+def format_db_answer(question: str, columns: list, rows: list) -> str:
+    """
+    Turns raw SQL result rows into a natural language answer.
+    """
+    if not rows:
+        return "I queried the database, but no matching records were found."
+
+    # Build a readable table block to give the LLM as context
+    table_lines = [", ".join(columns)]
+    for row in rows:
+        table_lines.append(", ".join(str(v) for v in row))
+    table_text = "\n".join(table_lines)
+
+    prompt = f"""You are a helpful assistant answering a question using database query results.
+
+Question: {question}
+
+Query results (CSV format):
+{table_text}
+
+Write a clear, natural language answer to the question using ONLY this data.
+Do not invent any information not present in the results.
+If there are multiple results, you may use a short list.
+Return ONLY the answer text, no preamble.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=400,
+            temperature=0.1
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        # Fallback to the raw table if the LLM call fails
+        return f"Found {len(rows)} result(s):\n\n{table_text}"
+
+
 def run_database_query(question: str) -> dict:
     """
     Full pipeline: scope check → generate SQL → validate → execute.
@@ -43,10 +92,12 @@ def run_database_query(question: str) -> dict:
     result = execute_safe_query(generated_sql)
 
     if result["success"]:
+        answer = format_db_answer(question, result["columns"], result["rows"])
         return {
             "success":   True,
             "stage":     "complete",
             "sql":       generated_sql,
+            "answer":    answer,
             "columns":   result["columns"],
             "rows":      result["rows"],
             "row_count": result["row_count"]
